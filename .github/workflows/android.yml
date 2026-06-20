@@ -52,7 +52,7 @@ jobs:
           echo "Current time: $(date)"
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ github.ref }}
@@ -222,7 +222,7 @@ jobs:
           echo "Current time: $(date)"
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ github.ref }}
@@ -243,7 +243,7 @@ jobs:
           echo "ORG_GRADLE_JAVA_HOME=${JAVA_HOME}" >> "$GITHUB_ENV"
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
         with:
           packages: ""
 
@@ -262,7 +262,7 @@ jobs:
           set -o pipefail
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
         with:
           cache-read-only: false
           gradle-version: wrapper
@@ -569,7 +569,7 @@ jobs:
 
       - name: Sync Release to Target Repository
         if: env.PUBLISH_TO_XPOSED_REPO == 'true'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           repository: ${{ env.TARGET_MODULE_REPO }}
           name: ${{ needs.preflight.outputs.version_name }}
