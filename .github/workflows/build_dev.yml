@@ -5,6 +5,9 @@ on:
     branches: [ kalicyh ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build_apk:
     runs-on: ubuntu-latest
@@ -37,3 +40,25 @@ jobs:
         with:
           name: Sesame-AG-Dev编译APK
           path: app/build/outputs/apk/release/*.apk
+
+      - name: 生成Release信息
+        id: release
+        run: |
+          short_sha="${GITHUB_SHA::7}"
+          echo "tag=dev-${short_sha}" >> "$GITHUB_OUTPUT"
+          echo "name=dev-${short_sha}" >> "$GITHUB_OUTPUT"
+
+      - name: 发布Dev Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.release.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ steps.release.outputs.name }}
+          body: |
+            自动构建自 `${{ github.ref_name }}`
+
+            Commit: `${{ github.sha }}`
+          files: app/build/outputs/apk/release/*.apk
+          prerelease: true
+          make_latest: false
+          fail_on_unmatched_files: true

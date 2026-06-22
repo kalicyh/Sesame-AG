@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   sync-code:
@@ -24,8 +25,22 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: 合并 upstream/dev 到 kalicyh
+        id: sync
         run: |
+          before="$(git rev-parse HEAD)"
           git remote add upstream https://github.com/Sesame-AG/Sesame-AG.git
-          git fetch upstream dev
+          git fetch upstream dev:refs/remotes/upstream/dev
           git merge upstream/dev --no-edit
+          after="$(git rev-parse HEAD)"
+          if [[ "${before}" == "${after}" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           git push origin HEAD:kalicyh
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: 触发 Dev 打包发布
+        if: steps.sync.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run build_dev.yml --ref kalicyh
