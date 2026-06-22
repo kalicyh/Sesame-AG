@@ -178,11 +178,16 @@ object TaskBlacklist {
             "TASK_ID_INVALID" -> "任务ID非法"
             "PROMISE_TEMPLATE_NOT_EXIST", "生活记录模板不存在" -> "模板不存在"
             "FAKE_SUCCESS" -> "检测到伪成功"
+            "AD_TRAFFIC_RISK", "217", "61002" -> "广告流量风控"
+            "UNSUPPORTED_GAMEPLAY_TASK" -> "无稳定自动完成RPC闭环"
             else -> return
         }
 
         addToBlacklist(moduleName, taskId, taskTitle)
         val taskInfo = if (taskTitle.isNotBlank()) "$taskId - $taskTitle" else taskId
-        Log.record(TAG, "模块[$moduleName]任务[$taskInfo]因$reason 自动加入黑名单")
+        Log.record(
+            TAG,
+            "模块[$moduleName]任务[$taskInfo]因$reason 已加入自动任务跳过列表（用于避免重复尝试，不代表账号异常）"
+        )
     }
 }

@@ -49,11 +49,13 @@ private val sesameCreditDefaultBlacklist = setOf(
     "zml_tbxiaoxiaole_renwu_sanfang|去逛一逛消消乐", // 参数错误：promiseActivityExtCheck
     "zml_fengkuangshuishijie_renwu|去玩疯狂水世界", // 参数错误：promiseActivityExtCheck
     "zml_baoweixiangrikui_renwu|去玩保卫向日葵", // 参数错误：promiseActivityExtCheck
+    "zml_sanguobingheshidai_renwu|去玩三国冰河时代", // 参数错误：promiseActivityExtCheck
     "AP11313161|首次订阅养老金动态及福利", // 成长锦囊新任务中心 NORMAL_TASK，需真实订阅/社保业务
     "AP13350341|去查看我的借呗额度", // 成长锦囊新任务中心 NORMAL_TASK，借贷业务
     "AP11327894|完成1笔借呗支用", // 成长锦囊新任务中心 NORMAL_TASK，借贷支用
     "AP19361153|去借呗借一笔", // 成长锦囊新任务中心 NORMAL_TASK，借贷业务
-    "AP11287911|充话费最高立减1元" // 成长锦囊新任务中心 NORMAL_TASK，真实充值
+    "AP11287911|充话费最高立减1元", // 成长锦囊新任务中心 NORMAL_TASK，真实充值
+    "zml_mybx_xiadan_erfang|上蚂蚁保购入保险" // 参数错误：promiseActivityExtCheck
 )
 
 private val sesameAlchemyDefaultBlacklist = setOf(
@@ -73,6 +75,7 @@ private val sesameAlchemyDefaultBlacklist = setOf(
     "租游戏账号得芝麻粒",   // 参数错误：ILLEGAL_ARGUMENT
     "去玩浪漫餐厅",         // 参数错误：promiseActivityExtCheck
     "去玩疯狂水世界",       // 参数错误：promiseActivityExtCheck
+    "去玩时光杂货店",       // 参数错误：promiseActivityExtCheck
     "去玩斗破苍穹",       // 参数错误：promiseActivityExtCheck
     "hjwf_baoweixiangrikui_renwu|去玩保卫向日葵", // 参数错误：promiseActivityExtCheck
     "hjwf_eduka_renwu|去点击先用后付商品", // 参数错误：promiseActivityExtCheck
@@ -87,6 +90,7 @@ private val orchardDefaultBlacklist = setOf(
     "ORCHARD_NORMAL_KUAISHOU_MAX",      // 逛一逛快手
     "ORCHARD_NORMAL_DIAOYU1",           // 钓鱼1次
     "ZHUFANG3IN1",                      // 添加农场小组件并访问
+    "70000|逛好物最高得1500肥料",          // XLight广告流量风控，缺少稳定自动闭环
     "12172|逛浙江农货得肥料",             // 任务全局配置不存在
     "12173",                            // 买好货
     "TOUTIAO|逛一逛今日头条",            // 精确匹配旧今日头条任务，避免误伤趣头条任务
@@ -353,6 +357,14 @@ private val memberDefaultBlacklist = setOf(
     "HHKLLRW_TASK",
     "WSYLBLLRW_TASK",
     "ZMSLLRW_TASK",
+    "zzsjxyx|玩主宰世界|通过8关主线关卡",
+    "yzsc|玩约战沙城|完成5个日常活动",
+    "yblb2060170000359285|玩一步两步|通过2关",
+    "ljzc|玩龙迹之城|击杀6次挑战boss",
+    "sjwy|玩四季物语|完成15个订单",
+    "zlgz2060170000375112|玩猪了个猪|通过8关",
+    "zcylt|玩这城有良田|举办4次庙会",
+    "hlxxx|玩欢乐消消消|完成6个夜市任务",
     "营业执照",
     "淘宝闪购",
     "淘金币",
@@ -394,7 +406,7 @@ val DEFAULT_BLACKLIST: Map<String, Set<String>> = mapOf(
     "蚂蚁森林" to forestDefaultBlacklist,
     "余额宝" to yuebaoDefaultBlacklist,
     "黄金票" to goldTicketDefaultBlacklist,
-    "支付宝会员" to memberDefaultBlacklist,
+    "会员" to memberDefaultBlacklist,
     "蚂蚁保" to insuredDefaultBlacklist,
     "运动" to sportsDefaultBlacklist,
     "神奇物种" to dodoDefaultBlacklist,
