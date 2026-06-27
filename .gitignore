@@ -96,3 +96,4 @@ webui_debug*
 [submodule "libxposed/api"]
 	path = libxposed/api
 	url = https://github.com/libxposed/api.git
+.DS_Store
