@@ -31,8 +31,27 @@ jobs:
 
       - name: 授予Gradle执行权限
         run: chmod +x ./gradlew
+
+      - name: 配置正式签名
+        env:
+          ANDROID_SIGNING_KEY: ${{ secrets.ANDROID_SIGNING_KEY }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "${ANDROID_SIGNING_KEY}"
+          test -n "${ANDROID_KEYSTORE_PASSWORD}"
+          test -n "${ANDROID_KEY_ALIAS}"
+          test -n "${ANDROID_KEY_PASSWORD}"
+          keystore_file="${RUNNER_TEMP}/keystore.jks"
+          printf '%s' "${ANDROID_SIGNING_KEY}" | base64 --decode > "${keystore_file}"
+          echo "ANDROID_KEYSTORE_FILE=${keystore_file}" >> "$GITHUB_ENV"
       
       - name: Gradle编译Release APK
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: ./gradlew assembleRelease
       
       - name: 保存安装包
