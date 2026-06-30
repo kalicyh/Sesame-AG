@@ -5,10 +5,6 @@ on:
     - cron: '0 18 * * *'
   workflow_dispatch:
 
-concurrency:
-  group: sync-upstream-dev
-  cancel-in-progress: false
-
 permissions:
   contents: write
   actions: write
@@ -17,8 +13,6 @@ permissions:
 jobs:
   sync-code:
     runs-on: ubuntu-latest
-    env:
-      SYNC_BRANCH: sync-upstream-dev
     steps:
       - name: 拉取 kalicyh 分支
         uses: actions/checkout@v7
@@ -31,66 +25,68 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: 创建同步 PR
+      - name: 合并 upstream/dev 到 kalicyh
         id: sync
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          before="$(git rev-parse HEAD)"
           if git remote get-url upstream >/dev/null 2>&1; then
             git remote set-url upstream https://github.com/Sesame-AG/Sesame-AG.git
           else
             git remote add upstream https://github.com/Sesame-AG/Sesame-AG.git
           fi
           git fetch upstream dev:refs/remotes/upstream/dev
-          if git merge-base --is-ancestor upstream/dev HEAD; then
+
+          set +e
+          git merge upstream/dev --no-edit
+          merge_status=$?
+          set -e
+
+          if [[ "${merge_status}" -ne 0 ]]; then
+            git merge --abort || true
+            sync_branch="sync-upstream-dev"
+            git push --force origin refs/remotes/upstream/dev:refs/heads/${sync_branch}
+
+            pr_number="$(gh pr list \
+              --repo "${GITHUB_REPOSITORY}" \
+              --base "kalicyh" \
+              --head "${sync_branch}" \
+              --state open \
+              --json number \
+              --jq '.[0].number')"
+
+            if [[ -z "${pr_number}" || "${pr_number}" == "null" ]]; then
+              body_file="$(mktemp)"
+              printf '%s\n\n%s\n' \
+                "自动同步 upstream/dev 到 kalicyh 时合并失败，请在这个 PR 里手动处理。" \
+                "Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+                > "${body_file}"
+              pr_url="$(gh pr create \
+                --repo "${GITHUB_REPOSITORY}" \
+                --base "kalicyh" \
+                --head "${sync_branch}" \
+                --title "chore: sync upstream dev into kalicyh" \
+                --body-file "${body_file}")"
+              rm -f "${body_file}"
+              pr_number="$(gh pr view "${pr_url}" --repo "${GITHUB_REPOSITORY}" --json number --jq '.number')"
+            fi
+
+            echo "自动合并失败，已保留 PR #${pr_number} 供手动处理。" >&2
+            exit 1
+          fi
+
+          after="$(git rev-parse HEAD)"
+          if [[ "${before}" == "${after}" ]]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          git push --force-with-lease origin refs/remotes/upstream/dev:refs/heads/${SYNC_BRANCH}
-
-          pr_number="$(gh pr list \
-            --repo "${GITHUB_REPOSITORY}" \
-            --base "kalicyh" \
-            --head "${SYNC_BRANCH}" \
-            --state open \
-            --json number \
-            --jq '.[0].number')"
-
-          if [[ -z "${pr_number}" || "${pr_number}" == "null" ]]; then
-            body_file="$(mktemp)"
-            printf '%s\n\n%s\n' \
-              "自动同步 upstream/dev 到 kalicyh。若自动合并失败，请直接查看此 PR 处理。" \
-              "Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
-              > "${body_file}"
-            pr_url="$(gh pr create \
-              --repo "${GITHUB_REPOSITORY}" \
-              --base "kalicyh" \
-              --head "${SYNC_BRANCH}" \
-              --title "chore: sync upstream dev into kalicyh" \
-              --body-file "${body_file}")"
-            rm -f "${body_file}"
-            pr_number="$(gh pr view "${pr_url}" --repo "${GITHUB_REPOSITORY}" --json number --jq '.number')"
-          fi
-
+          git push origin HEAD:kalicyh
           echo "changed=true" >> "$GITHUB_OUTPUT"
-          echo "pr_number=${pr_number}" >> "$GITHUB_OUTPUT"
-
-      - name: 自动合并同步 PR
-        if: steps.sync.outputs.changed == 'true'
-        id: merge
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if gh pr merge "${{ steps.sync.outputs.pr_number }}" --repo "${GITHUB_REPOSITORY}" --merge; then
-            echo "merged=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "自动合并失败，请检查 PR #${{ steps.sync.outputs.pr_number }} 的冲突状态、分支保护规则或仓库合并设置。" >&2
-            echo "merged=false" >> "$GITHUB_OUTPUT"
-          fi
 
       - name: 触发 Dev 打包发布
-        if: steps.merge.outputs.merged == 'true'
+        if: steps.sync.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run build_dev.yml --repo kalicyh/Sesame-AG --ref kalicyh
