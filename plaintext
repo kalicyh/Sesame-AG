@@ -20,4 +20,3 @@ jobs:
         with:
           name: Dev-APK安装包
           path: app/build/outputs/apk/release/*.apk
-
