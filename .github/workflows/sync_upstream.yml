@@ -31,7 +31,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           sync_branch="sync-upstream-dev"
-          git remote add upstream https://github.com/Sesame-AG/Sesame-AG.git 2>/dev/null || git remote set-url upstream https://github.com/Sesame-AG/Sesame-AG.git
+          if git remote get-url upstream >/dev/null 2>&1; then
+            git remote set-url upstream https://github.com/Sesame-AG/Sesame-AG.git
+          else
+            git remote add upstream https://github.com/Sesame-AG/Sesame-AG.git
+          fi
           git fetch upstream dev:refs/remotes/upstream/dev
           if git merge-base --is-ancestor upstream/dev HEAD; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -49,7 +53,7 @@ jobs:
             --jq '.[0].number')"
 
           if [[ -n "${pr_number}" && "${pr_number}" != "null" ]]; then
-            pr_url="$(gh pr view "${pr_number}" --repo "${GITHUB_REPOSITORY}" --json url --jq '.url')"
+            :
           else
             pr_url="$(gh pr create \
               --repo "${GITHUB_REPOSITORY}" \
@@ -57,10 +61,11 @@ jobs:
               --head "${sync_branch}" \
               --title "chore: sync upstream dev into kalicyh" \
               --body "自动同步 upstream/dev 到 kalicyh。若自动合并失败，请直接查看此 PR 处理。")"
+            pr_number="$(gh pr view "${pr_url}" --repo "${GITHUB_REPOSITORY}" --json number --jq '.number')"
           fi
 
           echo "changed=true" >> "$GITHUB_OUTPUT"
-          echo "pr_url=${pr_url}" >> "$GITHUB_OUTPUT"
+          echo "pr_number=${pr_number}" >> "$GITHUB_OUTPUT"
 
       - name: 自动合并同步 PR
         if: steps.sync.outputs.changed == 'true'
@@ -68,7 +73,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh pr merge "${{ steps.sync.outputs.pr_url }}" --repo "${GITHUB_REPOSITORY}" --merge --delete-branch; then
+          if gh pr merge "${{ steps.sync.outputs.pr_number }}" --repo "${GITHUB_REPOSITORY}" --merge --delete-branch; then
             echo "merged=true" >> "$GITHUB_OUTPUT"
           else
             echo "merged=false" >> "$GITHUB_OUTPUT"
